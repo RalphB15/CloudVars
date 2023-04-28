@@ -222,5 +222,59 @@ namespace CloudVar
                 await setAsyncConcurrent(kvp.Key, kvp.Value);
             }
         }
+
+        public virtual async Task setAsyncHybrid(string name, object value, TimeSpan? expiration = null, int callbackCountThreshold = 10, int updateRateThreshold = 100)
+        {
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                if (!_values.ContainsKey(name))
+                {
+                    throw new InvalidOperationException("A value with the specified name does not exist.");
+                }
+
+                _values[name] = value;
+
+                if (expiration.HasValue)
+                {
+                    _expirationTimes[name] = DateTime.UtcNow + expiration.Value;
+                }
+
+                if (_callbacks.TryGetValue(name, out var callbacks))
+                {
+                    // Determine the most efficient way to execute callbacks based on the current conditions
+                    if (callbacks.Count < callbackCountThreshold && _updateRate < updateRateThreshold)
+                    {
+                        // Execute callbacks in a serialized manner using a semaphore
+                        var semaphore = new SemaphoreSlim(1, 1);
+                        foreach (var callback in callbacks)
+                        {
+                            await semaphore.WaitAsync();
+                            try
+                            {
+                                await callback(value);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Execute callbacks concurrently using a ConcurrentQueue
+                        var queue = new ConcurrentQueue<Func<object, Task>>(callbacks);
+                        var tasks = new List<Task>();
+                        while (queue.TryDequeue(out var callback))
+                        {
+                            tasks.Add(callback(value));
+                        }
+                        await Task.WhenAll(tasks);
+                    }
+                }
+
+                scope.Complete();
+            }
+        }
+
     }
 }

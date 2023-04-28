@@ -277,6 +277,42 @@ By using a transaction, you can ensure that both operations are performed atomic
 
 
 
+## setAsyncHybrid
+
+Updates the value of an existing key in the store with the specified name and invokes all registered callbacks for the key in either a serialized or concurrent manner, depending on the current conditions.
+
+### Syntax
+
+```csharp
+public virtual async Task setAsyncHybrid(string name, object value, TimeSpan? expiration = null, int callbackCountThreshold = 10, int updateRateThreshold = 100)
+```
+
+### Parameters
+
+- `name`: The name of the key to update.
+- `value`: The new value to set for the key.
+- `expiration`: The new expiration time for the key (optional).
+- `callbackCountThreshold`: The threshold for the number of callbacks registered for the key (optional). If there are fewer than this number of callbacks registered for the key, they will be executed in a serialized manner using a semaphore. Otherwise, they will be executed concurrently using a `ConcurrentQueue`.
+- `updateRateThreshold`: The threshold for the rate of updates (optional). If the rate of updates is less than this threshold, callbacks will be executed in a serialized manner using a semaphore. Otherwise, they will be executed concurrently using a `ConcurrentQueue`.
+
+### Returns
+
+A `Task` representing the asynchronous operation.
+
+### Exceptions
+
+- `InvalidOperationException`: Thrown if no key with the specified name exists in the store.
+
+### Example
+
+```csharp
+await CloudVars.Instance.setAsyncHybrid("myKey", "myValue", TimeSpan.FromMinutes(5), 5, 50);
+```
+
+This example updates the value of the key with the name `"myKey"` to `"myValue"` and sets its expiration time to 5 minutes from now. It also specifies that if there are fewer than 5 callbacks registered for the key and the rate of updates is less than 50, they will be executed in a serialized manner using a semaphore. Otherwise, they will be executed concurrently using a `ConcurrentQueue`.
+
+
+
 ## License
 
 CloudVars is licensed under the MIT License. See the [License.md](License.md) file for details.
