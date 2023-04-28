@@ -107,6 +107,20 @@ namespace CloudVar
         public static async Task SetAsyncConcurrent(string name, object value, TimeSpan? expiration = null) => await CloudVars.Instance.setAsyncConcurrent(name, value, expiration);
 
         /// <summary>
+        /// Updates the value of an existing key in the store with the specified name.
+        /// If no key with the specified name exists, an exception is thrown.
+        /// Invokes all registered callbacks for the key in either a serialized or concurrent manner,
+        /// depending on the current conditions and the specified thresholds.
+        /// </summary>
+        /// <param name="name">The name of the key to update.</param>
+        /// <param name="value">The new value to set for the key.</param>
+        /// <param name="expiration">The new expiration time for the key (optional).</param>
+        /// <param name="callbackCountThreshold">The threshold for the number of callbacks above which they will be executed concurrently (optional).</param>
+        /// <param name="updateRateThreshold">The threshold for the update rate above which callbacks will be executed concurrently (optional).</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task SetAsyncHybrid(string name, object value, TimeSpan? expiration = null, int callbackCountThreshold = 10, int updateRateThreshold = 100) => await CloudVars.Instance.setAsyncHybrid(name, value, expiration, callbackCountThreshold, updateRateThreshold);
+
+        /// <summary>
         /// Updates the values of multiple existing keys in the store.
         /// If no key with the specified name exists, an exception is thrown.
         /// Invokes all registered callbacks for each key in a serialized manner.
