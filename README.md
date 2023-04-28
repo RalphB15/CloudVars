@@ -6,7 +6,7 @@ CloudVars is a C# class designed to provide a simple and thread-safe way to mana
 
 ## Installation
 
-To use CloudVars, simply copy `CloudVars.cs` and `CL.cs` into your project's folder, and add `using CloudVar;` to your code file. Alternatively, you can add the binary file to your project's references.
+To use CloudVars, simply copy `CloudVars.cs` and `CV.cs` into your project's folder, and add `using CloudVar;` to your code file. Alternatively, you can add the binary file to your project's references.
 
 
 ## Usage
