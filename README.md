@@ -11,7 +11,7 @@ To use CloudVars, simply copy the `CloudVars.cs` file into your project's folder
 
 ## Usage
 
-To use the `CloudVar.CV` class, simply call the static methods provided by the class.
+To use the `CV` class, simply call the static methods provided by the class.
 
 ### Add
 
