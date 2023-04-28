@@ -47,35 +47,35 @@ public static void AddRange(IDictionary<string, object> values)
 
 ### SetRangeAsync
 
-Updates the values of multiple existing keys in the store asynchronously.
+Updates the values of multiple existing keys in the cloud asynchronously.
 
 ```csharp
 public static async Task SetRangeAsync(IDictionary<string, object> values)
 ```
 
-These methods allow adding or updating multiple key-value pairs at once. The `AddRange` method takes an `IDictionary<string, object>` as a parameter and adds each key-value pair to the cloud. The SetRangeAsync method also takes an `IDictionary<string, object>` as a parameter and updates each key-value pair in the store.
+These methods allow adding or updating multiple key-value pairs at once. The `AddRange` method takes an `IDictionary<string, object>` as a parameter and adds each key-value pair to the cloud. The SetRangeAsync method also takes an `IDictionary<string, object>` as a parameter and updates each key-value pair in the cloud.
 
 
 ### Example
 ```csharp
-// Create a mixed dictionary of key-value pairs to add to the store
+// Create a mixed dictionary of key-value pairs to add to the cloud
 var valuesToAdd = new Dictionary<string, object>
 {
     { "clientValue", new HttpClient() },
     { "messageValue", new HttpRequestMessage(HttpMethod.Get, "https:...") }
 };
 
-// Add the key-value pairs to the store
+// Add the key-value pairs to the cloud
 CV.AddRange(valuesToAdd);
 
-// Create a mixed dictionary of key-value pairs to update in the store
+// Create a mixed dictionary of key-value pairs to update in the cloud
 var valuesToUpdate = new Dictionary<string, object>
 {
     { "clientValue", new HttpClient() },
     { "messageValue", new HttpRequestMessage(HttpMethod.Post, "https://...") }
 };
 
-// Update the key-value pairs in the store
+// Update the key-value pairs in the cloud
 await CV.SetRangeAsync(valuesToUpdate);
 ```
 
@@ -121,7 +121,7 @@ public static void Remove(string name)
 
 ### GetAllNames
 
-Returns a list of all names of keys in store.
+Returns a list of all names of keys in cloud.
 
 ```csharp
 public static List<string> GetAllNames()
@@ -129,7 +129,7 @@ public static List<string> GetAllNames()
 
 ### Clear
 
-Clears all keys and values from store.
+Clears all keys and values from cloud.
 
 ```csharp
 public static void Clear()
