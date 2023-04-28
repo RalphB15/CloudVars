@@ -18,61 +18,91 @@ namespace CloudVar
 
         public static CloudVars Instance => _lazy.Value;
 
-        public virtual void add(string name, object value)
+        public virtual void add(string name, object value, TimeSpan? expiration = null)
         {
-            if (!_values.TryAdd(name, value))
+            using (var scope = new TransactionScope())
             {
-                throw new InvalidOperationException("A value with the specified name already exists.");
+                if (!_values.TryAdd(name, value))
+                {
+                    throw new InvalidOperationException("A value with the specified name already exists.");
+                }
+
+                if (expiration.HasValue)
+                {
+                    _expirationTimes[name] = DateTime.UtcNow + expiration.Value;
+                }
+
+                scope.Complete();
             }
         }
 
-        public virtual async Task setAsync(string name, object value)
+        public virtual async Task setAsync(string name, object value, TimeSpan? expiration = null)
         {
-            if (!_values.ContainsKey(name))
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                throw new InvalidOperationException("A value with the specified name does not exist.");
-            }
-
-            _values[name] = value;
-
-            if (_callbacks.TryGetValue(name, out var callbacks))
-            {
-                // Execute callbacks in a serialized manner using a semaphore
-                var semaphore = new SemaphoreSlim(1, 1);
-                foreach (var callback in callbacks)
+                if (!_values.ContainsKey(name))
                 {
-                    await semaphore.WaitAsync();
-                    try
+                    throw new InvalidOperationException("A value with the specified name does not exist.");
+                }
+
+                _values[name] = value;
+
+                if (expiration.HasValue)
+                {
+                    _expirationTimes[name] = DateTime.UtcNow + expiration.Value;
+                }
+
+                if (_callbacks.TryGetValue(name, out var callbacks))
+                {
+                    // Execute callbacks in a serialized manner using a semaphore
+                    var semaphore = new SemaphoreSlim(1, 1);
+                    foreach (var callback in callbacks)
                     {
-                        await callback(value);
-                    }
-                    finally
-                    {
-                        semaphore.Release();
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            await callback(value);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
                     }
                 }
+
+                scope.Complete();
             }
         }
 
-        public virtual async Task setAsyncConcurrent(string name, object value)
+        public virtual async Task setAsyncConcurrent(string name, object value, TimeSpan? expiration = null)
         {
-            if (!_values.ContainsKey(name))
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                throw new InvalidOperationException("A value with the specified name does not exist.");
-            }
-
-            _values[name] = value;
-
-            if (_callbacks.TryGetValue(name, out var callbacks))
-            {
-                // Execute callbacks concurrently using a ConcurrentQueue
-                var queue = new ConcurrentQueue<Func<object, Task>>(callbacks);
-                var tasks = new List<Task>();
-                while (queue.TryDequeue(out var callback))
+                if (!_values.ContainsKey(name))
                 {
-                    tasks.Add(callback(value));
+                    throw new InvalidOperationException("A value with the specified name does not exist.");
                 }
-                await Task.WhenAll(tasks);
+
+                _values[name] = value;
+
+                if (expiration.HasValue)
+                {
+                    _expirationTimes[name] = DateTime.UtcNow + expiration.Value;
+                }
+
+                if (_callbacks.TryGetValue(name, out var callbacks))
+                {
+                    // Execute callbacks concurrently using a ConcurrentQueue
+                    var queue = new ConcurrentQueue<Func<object, Task>>(callbacks);
+                    var tasks = new List<Task>();
+                    while (queue.TryDequeue(out var callback))
+                    {
+                        tasks.Add(callback(value));
+                    }
+                    await Task.WhenAll(tasks);
+                }
+
+                scope.Complete();
             }
         }
 

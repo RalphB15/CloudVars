@@ -225,6 +225,34 @@ public static async Task SetRangeAsyncConcurrent(IDictionary<string, object> val
 These methods provide an alternative to the `SetAsync` and `SetRangeAsync` methods that execute callbacks *concurrently* instead of *serially*. You can use these methods when you want to update a value or multiple values and execute their callbacks concurrently.
 
 
+## Expiration time
+
+The `CloudVars` class provides support for setting an expiration time for keys. This allows you to specify a `TimeSpan` after which the key will automatically expire and be removed from the store.
+
+To set an expiration time for a key, you can use the `add`, `setAsync`, or `setAsyncConcurrent` methods and provide a value for the optional `expiration` parameter. For example:
+
+```csharp
+// Add a new key-value pair to the store with an expiration time of 5 minutes
+CV.Add("myKey", "myValue", TimeSpan.FromMinutes(5));
+
+// Update the value of an existing key and set its expiration time to 10 minutes
+await CV.SetAsync("myKey", "newValue", TimeSpan.FromMinutes(10));
+```
+
+When you retrieve the value of a key using one of the `get` methods, the `CloudVars` class will automatically check if the key has expired and remove it from the store if necessary.
+
+```csharp
+// Get the value of a key
+var value = CV.Get<string>("myKey");
+
+// If the key has expired, an exception will be thrown
+```
+
+The ability to set an expiration time for keys can be useful in scenarios where you want to store temporary data that should be automatically removed after a certain period of time. For example, you might use this feature to implement a cache with automatic expiration of entries.
+
+I hope this helps! Let me know if you have any questions or if there's anything else I can help with.
+
+
 ## License
 
 CloudVars is licensed under the MIT License. See the [License.md](License.md) file for details.

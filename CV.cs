@@ -10,7 +10,8 @@ namespace CloudVar
         /// </summary>
         /// <param name="name">The name of the key to add.</param>
         /// <param name="value">The value to add to the store.</param>
-        public static void Add(string name, object value) => _cloudVars.add(name, value);
+        /// <param name="expiration">The expiration time for the key (optional).</param>
+        public static void Add(string name, object value, TimeSpan? expiration = null) => _cloudVars.add(name, value, expiration);
 
         /// <summary>
         /// Adds multiple new key-value pairs to the store.
@@ -90,8 +91,9 @@ namespace CloudVar
         /// </summary>
         /// <param name="name">The name of the key to update.</param>
         /// <param name="value">The new value to set for the key.</param>
+        /// <param name="expiration">The new expiration time for the key (optional).</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public static async Task SetAsync(string name, object value) => await CloudVars.Instance.setAsync(name, value);
+        public static async Task SetAsync(string name, object value, TimeSpan? expiration = null) => await CloudVars.Instance.setAsync(name, value, expiration);
 
         /// <summary>
         /// Updates the value of an existing key in the store with the specified name.
@@ -100,9 +102,9 @@ namespace CloudVar
         /// </summary>
         /// <param name="name">The name of the key to update.</param>
         /// <param name="value">The new value to set for the key.</param>
+        /// <param name="expiration">The new expiration time for the key (optional).</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public static async Task SetAsyncConcurrent(string name, object value) => await CloudVars.Instance.setAsyncConcurrent(name, value);
-
+        public static async Task SetAsyncConcurrent(string name, object value, TimeSpan? expiration = null) => await CloudVars.Instance.setAsyncConcurrent(name, value, expiration);
 
         /// <summary>
         /// Updates the values of multiple existing keys in the store.
