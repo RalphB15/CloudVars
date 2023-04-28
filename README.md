@@ -2,7 +2,7 @@
 
 ## Overview
 
-CloudVars is a C# class designed to provide a simple way to manage global variables in your code. With CloudVars, you can add, set, get, remove and check if a variable exists, all from a single location, without having to define global variables in different parts of your code. 
+CloudVars is a C# class designed to provide a simple and thread-safe way to manage global variables in your code. With CloudVars, you can add, set, get, remove and check if a variable exists, all from a single location, without having to define global variables in different parts of your code. CloudVars also provides support for registering callbacks that are invoked when the value of a variable changes, as well as support for setting expiration times for variables and performing operations atomically using transactions. 
 
 ## Installation
 
@@ -248,9 +248,33 @@ var value = CV.Get<string>("myKey");
 // If the key has expired, an exception will be thrown
 ```
 
-The ability to set an expiration time for keys can be useful in scenarios where you want to store temporary data that should be automatically removed after a certain period of time. For example, you might use this feature to implement a cache with automatic expiration of entries.
+The ability to set an expiration time for keys can be useful in scenarios where you want to store temporary data that should be automatically removed after a certain period of time.
 
-I hope this helps! Let me know if you have any questions or if there's anything else I can help with.
+
+
+Example that demonstrates the transaction features of the `CloudVars` class using the `CV` wrapper class:
+
+
+**Performing operations atomically using transactions:**
+
+```csharp
+using (var scope = new TransactionScope())
+{
+    // Add a new key-value pair to the store
+    CV.Add("myKey1", "myValue1");
+
+    // Update the value of an existing key
+    await CV.SetAsync("myKey2", "newValue2");
+
+    // Complete the transaction
+    scope.Complete();
+}
+```
+
+In the last example, we used a transaction to perform two operations on the `CloudVars` store ("cloud") atomically: adding a new key-value pair and updating the value of an existing key. This means that either both operations are performed successfully or neither of them is performed at all.
+
+By using a transaction, you can ensure that both operations are performed atomically, so that if one of the operations fails, the other operation is automatically rolled back and the data remains consistent.
+
 
 
 ## License
