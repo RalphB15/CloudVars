@@ -71,6 +71,11 @@ namespace CloudVar
         ///<param name="callback">The callback to invoke when there is a change in value for that specific key. </param> 
         public static void OnChange(string name, Func<object, Task> callback) => _cloudVars.onChange(name, callback);
 
+        /// <summary>
+        /// Removes a key from the store.
+        /// </summary>
+        public static void Remove(string name) => _cloudVars.remove(name);
+
         ///<summary> 
         ///<para>Removes all callbacks for that specific key. </para> 
         ///</summary> 

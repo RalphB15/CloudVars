@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-
+using System.Transactions;
 
 namespace CloudVar
 {
@@ -14,6 +14,9 @@ namespace CloudVar
         private readonly ConcurrentDictionary<string, object> _values = new ConcurrentDictionary<string, object>();
         private readonly Dictionary<string, List<Func<object, Task>>> _callbacks = new Dictionary<string, List<Func<object, Task>>>();
         private readonly ConcurrentDictionary<string, DateTime> _expirationTimes = new ConcurrentDictionary<string, DateTime>();
+
+
+        private int _updateRate = 0;
 
         protected CloudVars() { }
 
