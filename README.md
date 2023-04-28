@@ -207,6 +207,24 @@ Output:
 5 15
 ```
 
+
+### SetAsyncConcurrent
+
+Sets the value of the specified cloud variable asynchronously and executes all registered callbacks concurrently.
+
+```csharp
+public static async Task SetAsyncConcurrent(string name, object value)
+```
+### SetRangeAsyncConcurrent
+
+Updates the values of multiple existing keys in the cloud asynchronously and executes all registered callbacks for each key concurrently.
+
+```csharp
+public static async Task SetRangeAsyncConcurrent(IDictionary<string, object> values)
+```
+These methods provide an alternative to the `SetAsync` and `SetRangeAsync` methods that execute callbacks *concurrently* instead of *serially*. You can use these methods when you want to update a value or multiple values and execute their callbacks concurrently.
+
+
 ## License
 
 CloudVars is licensed under the MIT License. See the [License.md](License.md) file for details.

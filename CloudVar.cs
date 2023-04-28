@@ -5,17 +5,17 @@ using System.Threading.Tasks;
 
 namespace CloudVar
 {
-    internal class CloudVars
+    public class CloudVars
     {
         private static readonly Lazy<CloudVars> _lazy = new Lazy<CloudVars>(() => new CloudVars());
         private readonly ConcurrentDictionary<string, object> _values = new ConcurrentDictionary<string, object>();
         private readonly Dictionary<string, List<Func<object, Task>>> _callbacks = new Dictionary<string, List<Func<object, Task>>>();
 
-        private CloudVars() { }
+        protected CloudVars() { }
 
-        internal static CloudVars Instance => _lazy.Value;
+        public static CloudVars Instance => _lazy.Value;
 
-        internal void add(string name, object value)
+        public virtual void add(string name, object value)
         {
             if (!_values.TryAdd(name, value))
             {
@@ -23,7 +23,7 @@ namespace CloudVar
             }
         }
 
-        internal async Task setAsync(string name, object value)
+        public virtual async Task setAsync(string name, object value)
         {
             if (!_values.ContainsKey(name))
             {
@@ -51,13 +51,36 @@ namespace CloudVar
             }
         }
 
-        internal T get<T>(string name)
+        public virtual async Task setAsyncConcurrent(string name, object value)
+        {
+            if (!_values.ContainsKey(name))
+            {
+                throw new InvalidOperationException("A value with the specified name does not exist.");
+            }
+
+            _values[name] = value;
+
+            if (_callbacks.TryGetValue(name, out var callbacks))
+            {
+                // Execute callbacks concurrently using a ConcurrentQueue
+                var queue = new ConcurrentQueue<Func<object, Task>>(callbacks);
+                var tasks = new List<Task>();
+                while (queue.TryDequeue(out var callback))
+                {
+                    tasks.Add(callback(value));
+                }
+                await Task.WhenAll(tasks);
+            }
+        }
+
+
+        public virtual T get<T>(string name)
         {
             return (T)_values[name];
         }
 
         // Type inference version of Get method
-        internal T get<T>(string name, T defaultValue = default)
+        public virtual T get<T>(string name, T defaultValue = default)
         {
             if (_values.TryGetValue(name, out object value))
             {
@@ -69,7 +92,7 @@ namespace CloudVar
             }
         }
 
-        internal void onChange(string name, Action<object> callback)
+        public virtual void onChange(string name, Action<object> callback)
         {
             // Convert the Action callback to a Func callback that returns a completed Task
             onChange(name, (value) =>
@@ -79,7 +102,7 @@ namespace CloudVar
             });
         }
 
-        internal void onChange(string name, Func<object, Task> callback)
+        public virtual void onChange(string name, Func<object, Task> callback)
         {
             if (!_callbacks.TryGetValue(name, out var callbacks))
             {
@@ -93,7 +116,7 @@ namespace CloudVar
             }
         }
 
-        internal void remove(string name)
+        public virtual void remove(string name)
         {
             if (!_values.TryRemove(name, out _))
             {
@@ -101,26 +124,26 @@ namespace CloudVar
             }
         }
 
-        internal bool contains(string name)
+        public virtual bool contains(string name)
         {
             return _values.ContainsKey(name);
         }
 
         // Returns a list of all the names of the keys in the store
-        internal List<string> getAllNames()
+        public virtual List<string> getAllNames()
         {
             return _values.Keys.ToList();
         }
 
         // Clears all keys and values from the store
-        internal void clear()
+        public virtual void clear()
         {
             _values.Clear();
             _callbacks.Clear();
         }
 
         // Removes the specified callback for the specified key
-        internal void removeCallback(string name, Func<object, Task> callback)
+        public virtual void removeCallback(string name, Func<object, Task> callback)
         {
             if (_callbacks.TryGetValue(name, out var callbacks))
             {
@@ -132,7 +155,7 @@ namespace CloudVar
         }
 
         // Removes all callbacks for the specified key
-        internal void removeAllCallbacks(string name)
+        public virtual void removeAllCallbacks(string name)
         {
             if (_callbacks.TryGetValue(name, out var callbacks))
             {
@@ -143,7 +166,7 @@ namespace CloudVar
             }
         }
 
-        internal void addRange(IDictionary<string, object> values)
+        public virtual void addRange(IDictionary<string, object> values)
         {
             foreach (var kvp in values)
             {
@@ -151,7 +174,7 @@ namespace CloudVar
             }
         }
 
-        internal async Task setRangeAsync(IDictionary<string, object> values)
+        public virtual async Task setRangeAsync(IDictionary<string, object> values)
         {
             foreach (var kvp in values)
             {
@@ -159,9 +182,15 @@ namespace CloudVar
             }
         }
 
+        public virtual async Task setRangeAsyncConcurrent(IDictionary<string, object> values)
+        {
+            foreach (var kvp in values)
+            {
+                await setAsyncConcurrent(kvp.Key, kvp.Value);
+            }
+        }
+
     }
-
-
 
     public static class CV
     {
@@ -255,7 +284,18 @@ namespace CloudVar
         /// <param name="value">The new value to set for the key.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public static async Task SetAsync(string name, object value) => await CloudVars.Instance.setAsync(name, value);
-    
+
+        /// <summary>
+        /// Updates the value of an existing key in the store with the specified name.
+        /// If no key with the specified name exists, an exception is thrown.
+        /// Invokes all registered callbacks for the key concurrently.
+        /// </summary>
+        /// <param name="name">The name of the key to update.</param>
+        /// <param name="value">The new value to set for the key.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task SetAsyncConcurrent(string name, object value) => await CloudVars.Instance.setAsyncConcurrent(name, value);
+
+
         /// <summary>
         /// Updates the values of multiple existing keys in the store.
         /// If no key with the specified name exists, an exception is thrown.
@@ -264,5 +304,15 @@ namespace CloudVar
         /// <param name="values">The key-value pairs to update in the store.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public static async Task SetRangeAsync(IDictionary<string, object> values) => await _cloudVars.setRangeAsync(values);
+
+        /// <summary>
+        /// Updates the values of multiple existing keys in the store.
+        /// If no key with the specified name exists, an exception is thrown.
+        /// Invokes all registered callbacks for each key concurrently.
+        /// </summary>
+        /// <param name="values">The key-value pairs to update in the store.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task SetRangeAsyncConcurrent(IDictionary<string, object> values) => await _cloudVars.setRangeAsyncConcurrent(values);
+
     }
 }
