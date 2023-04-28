@@ -13,6 +13,7 @@ namespace CloudVar
         private static readonly Lazy<CloudVars> _lazy = new Lazy<CloudVars>(() => new CloudVars());
         private readonly ConcurrentDictionary<string, object> _values = new ConcurrentDictionary<string, object>();
         private readonly Dictionary<string, List<Func<object, Task>>> _callbacks = new Dictionary<string, List<Func<object, Task>>>();
+        private readonly ConcurrentDictionary<string, DateTime> _expirationTimes = new ConcurrentDictionary<string, DateTime>();
 
         protected CloudVars() { }
 
