@@ -1,7 +1,7 @@
 # CloudVars
 
 ## About
-CloudVars is a C# class that provides a mechanism for creating and managing global variables that can be accessed from anywhere in the application.
+A thread-safe, in-memory key-value store with optional expiration and callback support.
 
 ---
 Chose the one you prefer. Old version will not be maintained anymore.
